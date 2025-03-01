@@ -1,8 +1,13 @@
-import {Dimensions, StyleSheet, Text, View, Image} from "react-native";
-import {NewsDataType} from "@/types";
-import {SharedValue} from "react-native-reanimated";
-import {LinearGradient} from "expo-linear-gradient";
-import {Colors} from "@/constants/Colors";
+import { Dimensions, StyleSheet, Text, View, Image } from "react-native";
+import { NewsDataType } from "@/types";
+import Animated, {
+    Extrapolation,
+    interpolate,
+    SharedValue,
+    useAnimatedStyle
+} from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors } from "@/constants/Colors";
 
 type Props = {
     slideItem: NewsDataType,
@@ -10,22 +15,46 @@ type Props = {
     scrollX: SharedValue<number>
 }
 
-const {width} = Dimensions.get("screen");
+const { width } = Dimensions.get("screen");
 
-const SliderItem = ({slideItem, index}: Props) => {
+const SliderItem = ({ slideItem, index, scrollX }: Props) => {
+
+    const rnStyle = useAnimatedStyle(() => {
+        return {
+            transform: [
+                {
+                    translateX: interpolate(
+                        scrollX.value,
+                        [(index - 1) * width, index * width, (index + 1) * width],
+                        [-width * 0.15, 0, width * 0.15],
+                        Extrapolation.CLAMP
+                    ),
+                },
+                {
+                    scale: interpolate(
+                        scrollX.value,
+                        [(index - 1) * width, index * width, (index + 1) * width],
+                        [0.9, 1, 0.9],
+                        Extrapolation.CLAMP
+                    ),
+                },
+            ],
+        };
+    });
+
     return (
-        <View style={styles.itemWrapper}>
-            <Image source={{uri: slideItem.image_url}} style={styles.image}/>
+        <Animated.View style={[styles.itemWrapper, rnStyle]} key={slideItem.article_id}>
+            <Image source={{ uri: slideItem.image_url }} style={styles.image} />
             <LinearGradient colors={["transparent", 'rgba(0,0,0,0.8)']} style={styles.background}>
                 <View style={styles.sourceInfo}>
                     {slideItem.source_icon && (
-                        <Image source={{uri: slideItem.source_icon}} style={styles.sourceIcon}/>
+                        <Image source={{ uri: slideItem.source_icon }} style={styles.sourceIcon} />
                     )}
                     <Text style={styles.sourceName}>{slideItem.source_name}</Text>
                 </View>
                 <Text style={styles.title} numberOfLines={2}>{slideItem.title}</Text>
             </LinearGradient>
-        </View>
+        </Animated.View>
     );
 };
 
@@ -62,9 +91,9 @@ const styles = StyleSheet.create({
         gap: 10
     },
     sourceName: {
-      color: Colors.white,
-      fontSize: 12,
-      fontWeight: '600'
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: '600'
     },
     sourceIcon: {
         width: 25,
